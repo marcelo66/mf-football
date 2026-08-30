@@ -122,8 +122,23 @@ footer strong{padding-left:22px;font-size:19px;text-transform:uppercase}
   padding:7px 11px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.15);
   font-size:9px;letter-spacing:1.5px;color:#d7d9dd
 }
-body.transparent .bg,body.transparent .shade{display:none}
-body.transparent main{background:transparent}
+html.transparent,
+body.transparent{
+  background:transparent !important;
+}
+
+body.transparent .bg,
+body.transparent .shade{
+  display:none;
+}
+
+body.transparent main{
+  background:transparent;
+}
+body.transparent .main-card,
+body.transparent .side-card{
+  backdrop-filter:blur(8px);
+}
 @media(max-width:1300px){
   main{padding:35px}
   .layout{grid-template-columns:minmax(0,1fr) 370px}
