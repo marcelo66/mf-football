@@ -1,1 +1,445 @@
+<!doctype html>
+<html lang="es">
 
+<head>
+
+<meta charset="utf-8">
+
+<meta name="viewport"
+content="width=device-width,initial-scale=1">
+
+<title>MF Football — Control</title>
+
+<style>
+
+*{
+box-sizing:border-box;
+}
+
+body{
+margin:0;
+background:#090b10;
+color:#fff;
+font-family:Arial,Helvetica,sans-serif;
+padding:40px;
+}
+
+.container{
+max-width:850px;
+margin:auto;
+}
+
+h1{
+margin:0;
+font-size:34px;
+}
+
+.subtitle{
+color:#999;
+margin-top:6px;
+margin-bottom:30px;
+}
+
+.card{
+background:#11141b;
+border:1px solid #2a2e36;
+border-radius:12px;
+padding:25px;
+margin-bottom:20px;
+}
+
+h2{
+font-size:15px;
+letter-spacing:2px;
+margin-top:0;
+color:#ef737b;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+}
+
+button{
+border:0;
+padding:16px;
+border-radius:8px;
+background:#252a33;
+color:#fff;
+font-size:15px;
+font-weight:bold;
+cursor:pointer;
+}
+
+button:hover{
+background:#333a46;
+}
+
+button.active{
+background:#d72835;
+}
+
+label{
+display:block;
+margin-bottom:8px;
+font-size:13px;
+color:#aaa;
+}
+
+input{
+width:100%;
+padding:13px;
+background:#090b10;
+border:1px solid #333;
+border-radius:7px;
+color:#fff;
+font-size:14px;
+}
+
+.row{
+margin-bottom:18px;
+}
+
+.apply{
+width:100%;
+background:#d72835;
+font-size:17px;
+}
+
+.status{
+margin-top:20px;
+padding:15px;
+background:#090b10;
+border-radius:8px;
+color:#75df9d;
+}
+
+.url{
+font-size:12px;
+word-break:break-all;
+color:#aaa;
+margin-top:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>MF FOOTBALL</h1>
+
+<div class="subtitle">
+Control de gráficos deportivos
+</div>
+
+<div class="card">
+
+<h2>GRÁFICA ACTIVA</h2>
+
+<div class="grid">
+
+<button data-mode="zona-a">
+ZONA A
+</button>
+
+<button data-mode="zona-b">
+ZONA B
+</button>
+
+<button data-mode="resultados">
+RESULTADOS
+</button>
+
+<button data-mode="proximos">
+PRÓXIMOS
+</button>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>ROTACIÓN</h2>
+
+<div class="row">
+
+<label>
+Intervalo en segundos
+</label>
+
+<input
+id="rotateMs"
+type="number"
+min="3"
+max="60"
+value="8">
+
+</div>
+
+<button id="rotateBtn">
+ROTACIÓN DESACTIVADA
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>FONDO</h2>
+
+<div class="row">
+
+<label>
+URL de imagen
+</label>
+
+<input
+id="bg"
+placeholder="https://.../fondo.jpg">
+
+</div>
+
+<div class="row">
+
+<label>
+URL de video MP4
+</label>
+
+<input
+id="video"
+placeholder="https://.../fondo.mp4">
+
+</div>
+
+<div class="row">
+
+<label>
+Transparencia
+</label>
+
+<button id="transparentBtn">
+TRANSPARENTE
+</button>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<button
+class="apply"
+id="apply">
+APLICAR CAMBIOS
+</button>
+
+<div class="status"
+id="status">
+Conectando...
+</div>
+
+<div class="url"
+id="url">
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let mode="zona-a";
+
+let rotate=false;
+
+let transparent=true;
+
+const $ =
+id => document.getElementById(id);
+
+document
+.querySelectorAll("[data-mode]")
+.forEach(button => {
+
+button.onclick = () => {
+
+mode =
+button.dataset.mode;
+
+document
+.querySelectorAll("[data-mode]")
+.forEach(b =>
+b.classList.remove("active")
+);
+
+button.classList.add("active");
+
+};
+
+});
+
+$("rotateBtn").onclick = () => {
+
+rotate=!rotate;
+
+$("rotateBtn").textContent =
+rotate
+? "ROTACIÓN ACTIVADA"
+: "ROTACIÓN DESACTIVADA";
+
+};
+
+$("transparentBtn").onclick = () => {
+
+transparent=!transparent;
+
+$("transparentBtn").textContent =
+transparent
+? "TRANSPARENTE"
+: "FONDO NORMAL";
+
+};
+
+async function loadState(){
+
+try{
+
+const r =
+await fetch(
+"/api/overlay-control",
+{cache:"no-store"}
+);
+
+const json =
+await r.json();
+
+if(!json.ok)return;
+
+const s=json.state;
+
+mode=s.mode;
+
+rotate=!!s.rotate;
+
+transparent=
+s.transparent !== false;
+
+$("rotateMs").value =
+Math.round(
+(s.rotateMs || 8000)/1000
+);
+
+$("bg").value =
+s.bg || "";
+
+$("video").value =
+s.video || "";
+
+document
+.querySelectorAll("[data-mode]")
+.forEach(b =>
+b.classList.toggle(
+"active",
+b.dataset.mode===mode
+)
+);
+
+$("rotateBtn").textContent =
+rotate
+? "ROTACIÓN ACTIVADA"
+: "ROTACIÓN DESACTIVADA";
+
+$("transparentBtn").textContent =
+transparent
+? "TRANSPARENTE"
+: "FONDO NORMAL";
+
+$("status").textContent =
+"Control conectado";
+
+}catch(e){
+
+$("status").textContent =
+"Error de conexión";
+
+}
+
+}
+
+async function apply(){
+
+const payload={
+
+mode,
+
+rotate,
+
+rotateMs:
+Number($("rotateMs").value)*1000,
+
+transparent,
+
+bg:$("bg").value.trim(),
+
+video:$("video").value.trim()
+
+};
+
+try{
+
+const r =
+await fetch(
+"/api/overlay-control",
+{
+method:"POST",
+headers:{
+"Content-Type":
+"application/json"
+},
+body:
+JSON.stringify(payload)
+}
+);
+
+const json =
+await r.json();
+
+if(json.ok){
+
+$("status").textContent =
+"✓ Cambios aplicados";
+
+$("url").textContent =
+"vMix: " +
+location.origin +
+"/overlay/zona-a/index.html?transparent=1";
+
+}else{
+
+$("status").textContent =
+"Error: "+json.error;
+
+}
+
+}catch(e){
+
+$("status").textContent =
+"Error enviando cambios";
+
+}
+
+}
+
+$("apply").onclick=apply;
+
+loadState();
+
+</script>
+
+</body>
+
+</html>
