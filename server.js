@@ -25,6 +25,41 @@ let state = {
   data: null
 };
 
+const OVERLAY_STATE_FILE = path.join(DATA_DIR, "overlay-state.json");
+
+let overlayState = {
+  mode: "zona-a",
+  rotate: false,
+  rotateMs: 8000,
+  transparent: true,
+  bg: "",
+  video: "",
+  updatedAt: nowISO()
+};
+
+function loadOverlayState() {
+  try {
+    const saved = JSON.parse(
+      fs.readFileSync(OVERLAY_STATE_FILE, "utf8")
+    );
+
+    overlayState = {
+      ...overlayState,
+      ...saved
+    };
+
+    console.log("[OVERLAY] Estado anterior cargado.");
+  } catch {}
+}
+
+function saveOverlayState() {
+  fs.writeFileSync(
+    OVERLAY_STATE_FILE,
+    JSON.stringify(overlayState, null, 2),
+    "utf8"
+  );
+}
+
 function nowISO() {
   return new Date().toISOString();
 }
@@ -303,7 +338,99 @@ const server = http.createServer((req, res) => {
       next: state.data?.next?.length || 0
     }));
   }
+if (url.pathname === "/api/overlay-control") {
 
+  if (req.method === "GET") {
+    return send(res, 200, JSON.stringify({
+      ok: true,
+      state: overlayState
+    }));
+  }
+
+  if (req.method === "POST") {
+
+    let body = "";
+
+    req.on("data", chunk => {
+      body += chunk;
+
+      if (body.length > 10000) {
+        req.destroy();
+      }
+    });
+
+    req.on("end", () => {
+
+      try {
+
+        const incoming = JSON.parse(body || "{}");
+
+        const validModes = [
+          "zona-a",
+          "zona-b",
+          "resultados",
+          "proximos"
+        ];
+
+        if (
+          incoming.mode &&
+          validModes.includes(incoming.mode)
+        ) {
+          overlayState.mode = incoming.mode;
+        }
+
+        if (typeof incoming.rotate === "boolean") {
+          overlayState.rotate = incoming.rotate;
+        }
+
+        if (
+          incoming.rotateMs !== undefined &&
+          Number.isFinite(Number(incoming.rotateMs))
+        ) {
+          overlayState.rotateMs =
+            Math.max(3000, Math.min(60000, Number(incoming.rotateMs)));
+        }
+
+        if (typeof incoming.transparent === "boolean") {
+          overlayState.transparent = incoming.transparent;
+        }
+
+        if (typeof incoming.bg === "string") {
+          overlayState.bg = incoming.bg.slice(0, 1000);
+        }
+
+        if (typeof incoming.video === "string") {
+          overlayState.video = incoming.video.slice(0, 1000);
+        }
+
+        overlayState.updatedAt = nowISO();
+
+        saveOverlayState();
+
+        return send(res, 200, JSON.stringify({
+          ok: true,
+          state: overlayState
+        }));
+
+      } catch (err) {
+
+        return send(res, 400, JSON.stringify({
+          ok: false,
+          error: "JSON inválido"
+        }));
+
+      }
+
+    });
+
+    return;
+  }
+
+  return send(res, 405, JSON.stringify({
+    ok: false,
+    error: "Método no permitido"
+  }));
+}
   const file = safePath(url.pathname);
   if (!file.startsWith(PUBLIC_DIR)) {
     return send(res, 403, "Forbidden", "text/plain; charset=utf-8");
@@ -323,6 +450,7 @@ const server = http.createServer((req, res) => {
 });
 
 loadCache();
+loadOverlayState();
 refresh();
 setInterval(refresh, REFRESH_MS);
 
