@@ -1,1 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920,height=1080,initial-scale=1">
+<title>MF Football — Primera C</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<div id="backgroundImage" class="bg"></div>
+<video id="backgroundVideo" class="bg video-bg" muted autoplay loop playsinline></video>
+<div class="shade"></div>
+
+<main id="app">
+  <header class="top">
+    <div>
+      <div class="brand">MF FOOTBALL</div>
+      <div class="kicker">FÚTBOL ARGENTINO · PRIMERA C</div>
+      <h1 id="title">PRIMERA C METROPOLITANA</h1>
+    </div>
+    <div class="status">
+      <span id="statusDot"></span>
+      <b id="updated">CARGANDO DATOS</b>
+    </div>
+  </header>
+
+  <section class="layout">
+    <div class="main-card">
+      <div class="card-head">
+        <div>
+          <div class="label" id="sectionLabel">TABLA DE POSICIONES</div>
+          <h2 id="tableName">Cargando...</h2>
+        </div>
+        <div class="counter" id="counter"></div>
+      </div>
+      <div id="table"></div>
+    </div>
+
+    <aside>
+      <div class="side-card">
+        <div class="side-title">RESULTADOS <small id="gameDate"></small></div>
+        <div id="results"></div>
+      </div>
+      <div class="side-card next-card">
+        <div class="side-title">PRÓXIMOS PARTIDOS</div>
+        <div id="next"></div>
+      </div>
+    </aside>
+  </section>
+
+  <footer>
+    <div class="footer-brand">PRIMERA C</div>
+    <strong id="footerText">Resultados · Tablas · Fixture</strong>
+    <div class="keys">← → CAMBIAR · R ACTUALIZAR</div>
+  </footer>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
 
