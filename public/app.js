@@ -7,7 +7,7 @@ const path = location.pathname
   .replace(/\/index\.html$/i, "")
   .replace(/\/+$/, "") || "/";
 
-const mode =
+let mode =
   path.endsWith("/zona-a") ? "zona-a" :
   path.endsWith("/zona-b") ? "zona-b" :
   path.endsWith("/resultados") ? "resultados" :
@@ -18,6 +18,98 @@ const rotateMs = Number(params.get("rotate") || 8000);
 const bg = params.get("bg");
 const video = params.get("video");
 const transparent = params.get("transparent") === "1";
+let remoteRotateTimer = null;
+
+const overlayModes = [
+  "zona-a",
+  "zona-b",
+  "resultados",
+  "proximos"
+];
+
+function applyOverlayState(state) {
+
+  if (!state) return;
+
+  if (state.mode && overlayModes.includes(state.mode)) {
+    mode = state.mode;
+  }
+
+  document.body.classList.toggle(
+    "transparent",
+    state.transparent === true
+  );
+
+  if (state.bg) {
+    $("#backgroundImage").style.backgroundImage =
+      `url("${state.bg}")`;
+    $("#backgroundImage").style.display = "block";
+  }
+
+  if (state.video) {
+
+    const v = $("#backgroundVideo");
+
+    v.src = state.video;
+    v.style.display = "block";
+
+    $("#backgroundImage").style.display = "none";
+
+  }
+
+  if (remoteRotateTimer) {
+    clearInterval(remoteRotateTimer);
+    remoteRotateTimer = null;
+  }
+
+  if (state.rotate) {
+
+    const interval =
+      Number(state.rotateMs) || 8000;
+
+    remoteRotateTimer = setInterval(() => {
+
+      const current =
+        overlayModes.indexOf(mode);
+
+      const nextIndex =
+        (current + 1) % overlayModes.length;
+
+      mode = overlayModes[nextIndex];
+
+      render();
+
+    }, interval);
+  }
+
+  render();
+}
+
+async function loadOverlayControl() {
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/overlay-control?_=" + Date.now(),
+        { cache: "no-store" }
+      );
+
+    const json = await response.json();
+
+    if (json.ok && json.state) {
+      applyOverlayState(json.state);
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "[OVERLAY CONTROL]",
+      error
+    );
+
+  }
+}
 
 const $ = s => document.querySelector(s);
 
@@ -228,8 +320,18 @@ document.addEventListener("keydown",e=>{
 });
 
 setupBackground();
+
 load();
+
+loadOverlayControl();
+
 setInterval(load,30000);
+
+setInterval(
+  loadOverlayControl,
+  2000
+);
+
 if(mode === "auto"){
   timer = setInterval(next,rotateMs);
 }
