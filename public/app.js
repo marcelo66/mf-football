@@ -3,7 +3,10 @@ let page = 0;
 let timer = null;
 
 const params = new URLSearchParams(location.search);
-const path = location.pathname.replace(/\/+$/,"") || "/";
+const path = location.pathname
+  .replace(/\/index\.html$/i, "")
+  .replace(/\/+$/, "") || "/";
+
 const mode =
   path.endsWith("/zona-a") ? "zona-a" :
   path.endsWith("/zona-b") ? "zona-b" :
